@@ -65,7 +65,7 @@ def load_data():
     #   coins[str(i['id'])] = i['slug']
     listings = coin_data['props']['initialState']['cryptocurrency']['listingLatest']['data']
     for i in range(1,101):
-        coins[str(listings[i][8])] = listings[i][125]
+        coins[str(listings[i][8])] = listings[i][132]
     coin_name = []
     coin_symbol = []
     market_cap = []
@@ -76,14 +76,14 @@ def load_data():
     volume_24h = []
 
     for i in range(1,101):
-      coin_name.append(listings[i][125])
-      coin_symbol.append(listings[i][126])
-      price.append(listings[i][64])
-      percent_change_1h.append(listings[i][58])
-      percent_change_24h.append(listings[i][59])
-      percent_change_7d.append(listings[i][62])
-      market_cap.append(listings[i][55])
-      volume_24h.append(listings[i][66])
+      coin_name.append(listings[i][132])
+      coin_symbol.append(listings[i][133])
+      price.append(listings[i][66])
+      percent_change_1h.append(listings[i][60])
+      percent_change_24h.append(listings[i][61])
+      percent_change_7d.append(listings[i][64])
+      market_cap.append(listings[i][57])
+      volume_24h.append(listings[i][68])
 
     df = pd.DataFrame(columns=['coin_name', 'coin_symbol', 'price','market_cap', 'percent_change_1h', 'percent_change_24h', 'percent_change_7d', 'volume_24h'])
     df['coin_name'] = coin_name
