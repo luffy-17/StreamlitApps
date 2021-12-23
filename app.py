@@ -52,7 +52,6 @@ col1.header('Input Options')
 currency_price_unit = col1.selectbox('Select currency for price', ('USD', 'BTC', 'ETH'))
 
 # Web scraping of CoinMarketCap data
-@st.cache
 def load_data():
     cmc = requests.get('https://coinmarketcap.com')
     soup = BeautifulSoup(cmc.content, 'html.parser')
