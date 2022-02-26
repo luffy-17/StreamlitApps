@@ -8,6 +8,12 @@ from bs4 import BeautifulSoup
 import requests
 import json
 import time
+import numpy as np
+import seaborn as sns
+from tensorflow.keras.models import load_model
+import joblib
+import plotly.express as px
+
 #---------------------------------#
 # New feature (make sure to upgrade your streamlit library)
 # pip install --upgrade streamlit
@@ -74,7 +80,7 @@ def load_data():
     price = []
     volume_24h = []
 
-    for i in range(1,101):
+    for i in range(1,51):
       coin_name.append(listings[i][132])
       coin_symbol.append(listings[i][133])
       price.append(listings[i][66])
@@ -148,7 +154,7 @@ if percent_timeframe == '7d':
     if sort_values == 'Yes':
         df_change = df_change.sort_values(by=['percent_change_7d'])
     col3.write('*7 days period*')
-    plt.figure(figsize=(5,25))
+    plt.figure(figsize=(5,10))
     plt.subplots_adjust(top = 1, bottom = 0)
     df_change['percent_change_7d'].plot(kind='barh', color=df_change.positive_percent_change_7d.map({True: 'g', False: 'r'}))
     col3.pyplot(plt)
@@ -156,7 +162,7 @@ elif percent_timeframe == '24h':
     if sort_values == 'Yes':
         df_change = df_change.sort_values(by=['percent_change_24h'])
     col3.write('*24 hour period*')
-    plt.figure(figsize=(5,25))
+    plt.figure(figsize=(5,10))
     plt.subplots_adjust(top = 1, bottom = 0)
     df_change['percent_change_24h'].plot(kind='barh', color=df_change.positive_percent_change_24h.map({True: 'g', False: 'r'}))
     col3.pyplot(plt)
@@ -164,7 +170,68 @@ else:
     if sort_values == 'Yes':
         df_change = df_change.sort_values(by=['percent_change_1h'])
     col3.write('*1 hour period*')
-    plt.figure(figsize=(5,25))
+    plt.figure(figsize=(5,10))
     plt.subplots_adjust(top = 1, bottom = 0)
     df_change['percent_change_1h'].plot(kind='barh', color=df_change.positive_percent_change_1h.map({True: 'g', False: 'r'}))
     col3.pyplot(plt)
+
+
+#############################################  Prediction  ########################################
+col2.subheader('Price prediction of BNB')
+def data_cleaning(df):
+  df = df.iloc[::-1].reset_index()
+  df = df.drop('index', axis=1)
+  df = df.drop(['unix', 'symbol', 'Volume BNB', "Volume USDT", 'tradecount'], axis=1)
+  df.columns = [col.capitalize() for col in df.columns]
+  df = df.fillna(df['Open'].mean())
+  df['Date'] = [i[:10] for i in df['Date']]
+  return df
+
+df = pd.read_csv('Binance_BNBUSDT_d(1).csv')
+df = data_cleaning(df)
+
+cols = list(df)[1:6]
+df_for_training = df[cols].astype(float)
+train_dates = pd.to_datetime(df['Date'], dayfirst=True)
+scaler = joblib.load('scaler.save') 
+df_for_training_scaled = scaler.transform(df_for_training)
+
+#Empty lists to be populated using formatted training data
+def prep_training(df):
+  trainX = []
+  trainY = []
+  n_future = 10   # Number of days we want to look into the future based on the past days.
+  n_past = 30  # Number of past days we want to use to predict the future.
+
+  for i in range(n_past, len(df_for_training_scaled) - n_future +1):
+      trainX.append(df_for_training_scaled[i - n_past:i, 0:df_for_training.shape[1]])
+      trainY.append(df_for_training_scaled[i + n_future - 1:i + n_future, 0])
+  return np.array(trainX), np.array(trainY)
+trainX, trainY = prep_training(df_for_training_scaled)
+
+def prediction_fun(model,trainX,train_dates,df_for_training):
+  n_days_for_prediction=30
+  predict_period_dates = pd.date_range(list(train_dates)[-1], periods=n_days_for_prediction).tolist()
+  #Make prediction
+  prediction = model.predict(trainX[-n_days_for_prediction:])
+  # prediction = prediction[30:]
+  prediction_copies = np.repeat(prediction, df_for_training.shape[1], axis=-1)
+  y_pred_future = scaler.inverse_transform(prediction_copies)[:,0]
+  forecast_dates = []
+  for time_i in predict_period_dates:
+      forecast_dates.append(time_i.date())
+      
+  df_forecast = pd.DataFrame({'Date':np.array(forecast_dates), 'Open':y_pred_future})
+  df_forecast['Date']=pd.to_datetime(df_forecast['Date'])
+
+  original = df[['Date', 'Open']]
+  original['Date']=pd.to_datetime(original['Date'], dayfirst=True)
+
+  fig = px.line(x=original['Date'], y=original['Open'], title='Prediction of BNB', labels= {'y':'Price', 'x':'Date'})
+  fig = px.line(x=df_forecast['Date'], y=df_forecast['Open'],  labels= {'y':'Price', 'x':'Date'})
+  fig.update_layout(width=1000, height=500)
+  st.plotly_chart(fig)
+  return y_pred_future
+
+model = load_model('BNB_model_200_epoch.h5')
+y_pred_future = prediction_fun(model,trainX,train_dates,df_for_training)
