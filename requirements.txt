@@ -6,3 +6,4 @@ seaborn
 tensorflow
 joblib
 plotly
+pickle
