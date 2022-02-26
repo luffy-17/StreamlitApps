@@ -25,9 +25,9 @@ st.set_page_config(layout="wide")
 #---------------------------------#
 # Title
 
-image = Image.open('logo.jpg')
+# image = Image.open('logo.jpg')
 
-st.image(image, width = 500)
+# st.image(image, width = 500)
 
 st.title('Crypto Price App')
 st.markdown("""
@@ -187,7 +187,7 @@ def data_cleaning(df):
   df['Date'] = [i[:10] for i in df['Date']]
   return df
 
-df = pd.read_csv('Binance_BNBUSDT_d(1).csv')
+df = pd.read_csv('Binance_BNBUSDT_d.csv')
 df = data_cleaning(df)
 
 cols = list(df)[1:6]
