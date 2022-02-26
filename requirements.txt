@@ -3,3 +3,6 @@ numpy
 requests
 bs4
 seaborn
+tensorflow
+joblib
+plotly
