@@ -6,5 +6,4 @@ seaborn
 tensorflow
 joblib
 plotly
-pickle
 sklearn
