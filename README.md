@@ -6,5 +6,3 @@ Data scraped from coinmarketcap and used LSTM to predict the future Prices of BN
 ## WebApp View
 
 ![screen](screenshot.png )
-
-Link to app: https://share.streamlit.io/luffy-17/streamlitapps/app.py
